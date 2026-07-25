@@ -31,9 +31,11 @@ flowchart TD
 | `python run_genetic.py` | Debug visual ve a frota evoluindo ao vivo |
 | `python run_genetic.py --train` | Treino headless 500 geracoes |
 | `python run_genetic.py --train --eps 100` | Treino com N geracoes |
+| `python run_genetic.py --train --gens 100` | Sinonimo de `--eps` |
 | `python run_genetic.py --train --pop 100` | Treino com N naves por geracao |
 | `python run_genetic.py --show` | Showcase do melhor cerebro (best.pkl) |
 | `python run_genetic.py --show 20` | Showcase de uma geracao especifica |
+| `python run_genetic.py --show --gen 20` | Showcase de uma geracao especifica (explicito) |
 | `python run_genetic.py --list` | Lista checkpoints salvos |
 
 > Modo `--train` pode levar varios minutos. Use `--show` para ver o progresso visualmente.

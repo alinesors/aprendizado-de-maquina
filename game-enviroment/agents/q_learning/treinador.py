@@ -133,7 +133,7 @@ def treinar(n_episodios=80000, alpha=0.05, gamma=0.97, epsilon=1.0,
             sucessos_janela = 0
             recs_janela = []
 
-        if (ep + 1) % showcase_intervalo == 0:
+        if ep == 0 or (ep + 1) % showcase_intervalo == 0:
             epsilon_salvo = agente.epsilon
             agente.epsilon = 0.0
             env_show = OrbitalEnv(render_mode="human")

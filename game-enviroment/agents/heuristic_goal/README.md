@@ -183,6 +183,7 @@ python agents/heuristic_agent.py
 
 # Modo treinado — carrega waypoints salvos, sem A*
 python agents/heuristic_agent.py --show 001
+python agents/heuristic_agent.py --trained 001   # sinonimo de --show
 python agents/heuristic_agent.py --show latest
 
 # Listar runs salvos

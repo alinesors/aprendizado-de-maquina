@@ -424,7 +424,6 @@ def main_trained(run_id):
     actions = run_data.get("actions", [])
     segments = run_data["segments"]
     stats = run_data["stats"]
-    checkpoint_order = run_data.get("checkpoint_order", [])
     checkpoint_action_indices = run_data.get(
         "checkpoint_action_indices", []
     )
@@ -439,7 +438,6 @@ def main_trained(run_id):
     print(f"  Steps: {stats['steps']}  Thrusts: {stats['thrusts']}")
     print(f"  Reward: {stats['reward']:.0f}")
 
-    global_margin = 0.0
     action_idx = 0
     step_counter = 0
     collected_count = 0
@@ -448,6 +446,7 @@ def main_trained(run_id):
     crash_info = ""
     display_path = None
     autopilot = None
+    info_printed = False
 
     running = True
     while running:
@@ -458,13 +457,6 @@ def main_trained(run_id):
                 if event.key == pygame.K_ESCAPE:
                     running = False
                 elif event.key == pygame.K_r:
-                    status = env.last_info.get("status", "") if env.done else ""
-                    if not env.done or status == "docked":
-                        global_margin += 5.0
-                    crash_info = (
-                        f"TENTATIVA  MARGEM +{global_margin:.0f}px"
-                    )
-                    crash_timer = 120
                     obs = env.reset()
                     action_idx = 0
                     step_counter = 0
@@ -472,27 +464,72 @@ def main_trained(run_id):
                     seg_idx = 0
                     display_path = None
                     autopilot = None
+                    info_printed = False
 
         if env.done:
             env.render()
             if display_path:
                 draw_path_line(env.screen, display_path)
-            if crash_timer > 0:
-                draw_agent_hud(env.screen, 0, global_margin,
-                               crash_info, crash_timer)
-                crash_timer -= 1
-                if crash_timer == 0:
-                    status = env.last_info.get("status", "")
-                    if status != "docked":
-                        obs = env.reset()
-                        action_idx = 0
-                        step_counter = 0
-                        collected_count = 0
-                        seg_idx = 0
-                        display_path = None
-                        autopilot = None
+            if not info_printed:
+                status = env.last_info.get("status", "")
+                icon = "ATRACOU" if status == "docked" else (
+                    "COLIDIU" if status == "crashed_planet" else (
+                        "FORA" if status == "out_of_bounds" else (
+                            "SEM COMB." if status == "no_fuel" else "???"
+                        )
+                    )
+                )
+                print(f"Run {run_data['run_id']:03d} | {icon} | steps={step_counter} | CPs={collected_count}")
+                info_printed = True
             pygame.display.flip()
             continue
+
+        if not env.done and step_counter >= stats["steps"] and has_actions:
+            # Acoes do replay acabaram — talvez precise do fallback autopilot
+            # Deixa continuar com autopilot ou para
+            pass
+
+        if has_actions:
+            if action_idx < len(actions):
+                action = actions[action_idx]
+                action_idx += 1
+            else:
+                if autopilot is None:
+                    seg = segments[seg_idx] if seg_idx < len(segments) else segments[-1]
+                    if seg.get("waypoints"):
+                        path = [list(wp) for wp in seg["waypoints"]]
+                        autopilot = AutoPilot(path, env.planets)
+                    else:
+                        autopilot = None
+                if autopilot is None or not autopilot.has_path():
+                    seg_idx += 1
+                    autopilot = None
+                    if seg_idx < len(segments):
+                        seg = segments[seg_idx]
+                        if seg.get("waypoints"):
+                            path = [list(wp) for wp in seg["waypoints"]]
+                            autopilot = AutoPilot(path, env.planets)
+                action = autopilot.get_action(obs) if autopilot else 0
+        else:
+            if autopilot is None:
+                if seg_idx < len(segments):
+                    seg = segments[seg_idx]
+                    path = [list(wp) for wp in seg.get("waypoints", [])]
+                    if path:
+                        autopilot = AutoPilot(path, env.planets)
+                else:
+                    autopilot = None
+            if autopilot is None:
+                action = 0
+            elif not autopilot.has_path():
+                seg_idx += 1
+                autopilot = None
+                action = 0
+            else:
+                action = autopilot.get_action(obs)
+
+        obs, reward, done, info = env.step(action)
+        step_counter += 1
 
         if checkpoint_action_indices:
             while seg_idx < len(checkpoint_action_indices):
@@ -507,83 +544,20 @@ def main_trained(run_id):
                             for wp in seg.get("display_waypoints",
                                               seg["waypoints"])]
 
-        if has_actions:
-            action = (actions[action_idx]
-                      if action_idx < len(actions) else 0)
-            action_idx += 1
-        else:
-            if autopilot is None:
-                seg = segments[seg_idx]
-                path = [list(wp) for wp in seg["waypoints"]]
-                is_dock = seg_idx == len(segments) - 1
-                autopilot = AutoPilot(path, env.planets, is_docking=is_dock)
-            if not autopilot.has_path():
-                seg_idx += 1
-                if seg_idx < len(segments):
-                    seg = segments[seg_idx]
-                    path = [list(wp) for wp in seg["waypoints"]]
-                    is_dock = seg_idx == len(segments) - 1
-                    autopilot = AutoPilot(path, env.planets, is_docking=is_dock)
-                else:
-                    autopilot = None
-            action = autopilot.get_action(obs) if autopilot else 0
-
-        obs, reward, done, info = env.step(action)
-        step_counter += 1
         env.render()
-
         if display_path:
             draw_path_line(env.screen, display_path)
-            if crash_timer > 0:
-                draw_agent_hud(env.screen, attempt, global_margin,
-                               crash_info, crash_timer)
-                crash_timer -= 1
-                if crash_timer == 0 and env.done:
-                    status = env.last_info.get("status", "")
-                    if status != "docked":
-                        obs = env.reset()
-                        crash_handled = False
-                        total_thrusts = 0
-                        action_log = []
-                        checkpoint_action_indices = []
-                        segments = []
-                        checkpoint_order = []
-                        current_segment_path = None
-                        current_segment_raw = None
-                        grid_map = GridMap(env.planets, env.checkpoints,
-                                           env.station_pos, global_margin)
-                        ship_pos = (float(obs[0]), float(obs[1]))
-                        goal_pos = get_current_goal(env, ship_pos)
-                        current_segment_target = goal_pos
-                        planner = AStarPlanner(grid_map)
-                        a_star_gen = planner.search(ship_pos, goal_pos)
-                        autopilot = None
-                        path = None
-                        phase = "planning"
-                        last_replan_time = pygame.time.get_ticks()
-                        last_dist_to_goal = None
-                        planning_background = None
-                        start_cell = grid_map.pos_to_cell(*ship_pos)
-                        path_hold_counter = 0
-
-            pygame.display.flip()
 
         if env.done:
-            status = env.last_info.get("status", "")
-            if status == "docked":
-                crash_info = f"SUCESSO!  Run {run_data['run_id']:03d}"
-                crash_timer = 300
-            else:
-                global_margin += 5.0
-                crash_info = f"FALHA  MARGEM +{global_margin:.0f}px"
-                crash_timer = 120
-        else:
-            if info.get("checkpoint_collected"):
-                collected_count += 1
-                if not checkpoint_action_indices:
-                    seg_idx = max(seg_idx,
-                                  min(collected_count, len(segments) - 1))
-                autopilot = None
+            continue
+        elif info.get("checkpoint_collected"):
+            collected_count += 1
+            if not checkpoint_action_indices:
+                seg_idx = max(seg_idx,
+                              min(collected_count, len(segments) - 1))
+            autopilot = None
+
+        pygame.display.flip()
 
     env.close()
     pygame.quit()

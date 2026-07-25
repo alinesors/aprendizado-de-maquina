@@ -119,20 +119,18 @@ def modo_debug():
     env.close()
 
 
-def modo_treino(pop_size, geracoes, showcase=False):
+def modo_treino(pop_size, geracoes):
     print("=" * 60)
     print("ODISSEIA ORBITAL — Treinamento Genetico")
     print("=" * 60)
     print("Populacao: {} naves".format(pop_size))
     print("Geracoes:  {}".format(geracoes))
-    if showcase:
-        print("Showcase:  habilitado (gens 1, 20, 40, ..., {})".format(geracoes))
     print()
 
     treinador = TreinadorGenetico(pop_size=pop_size)
     treinador.treinar(geracoes=geracoes, max_steps=2000,
                       taxa_mutacao=0.06, forca_mutacao=0.15, decay_forca=0.9992,
-                      showcase=showcase)
+                      showcase=True)
 
 
 def modo_show(gen_id):
@@ -212,7 +210,6 @@ def print_help():
     print("Modos:")
     print("  (sem argumentos)    Debug visual com evolucao live")
     print("  --train             Treino headless (500 geracoes)")
-    print("  --train --showcase  Treino com showcases visuais")
     print("  --train --eps N     Treino com N geracoes")
     print("  --train --pop N     Treino com N naves")
     print("  --show              Showcase do melhor cerebro (best.pkl)")
@@ -230,13 +227,12 @@ def main():
     if "--train" in args:
         pop_size = 200
         geracoes = 500
-        showcase = "--showcase" in args
         for i, arg in enumerate(args):
             if arg in ("--eps", "--gens") and i + 1 < len(args):
                 geracoes = int(args[i + 1])
             elif arg == "--pop" and i + 1 < len(args):
                 pop_size = int(args[i + 1])
-        modo_treino(pop_size, geracoes, showcase)
+        modo_treino(pop_size, geracoes)
         return
 
     if "--show" in args:

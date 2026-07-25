@@ -28,6 +28,7 @@ flowchart LR
 |---|---|
 | `python run_heuristic.py` | Executa o agente com visualizacao completa |
 | `python run_heuristic.py --show` | Replay da run mais recente |
+| `python run_heuristic.py --trained` | Sinonimo de `--show` |
 | `python run_heuristic.py --show 001` | Replay de uma run especifica |
 | `python run_heuristic.py --list` | Lista todas as runs salvas |
 

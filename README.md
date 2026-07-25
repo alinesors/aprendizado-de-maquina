@@ -125,7 +125,7 @@ Ao iniciar: tela de titulo "ODISSEIA ORBITAL" em neon -> pressione **ENTER** -> 
 
 | Agente | Comando rapido | Descricao |
 |---|---|---|
-| [**Heuristico (A\*)**](docs/agentes/agente-heuristico.md) | `python run_heuristic.py` | A* visual ao vivo |
+| [**Heuristico (A\*)**](docs/agentes/agente-heuristico.md) | `python run_heuristic.py` | A* visual ao vivo (use `--show` para replay) |
 | [**Genetico**](docs/agentes/agente-genetico.md) | `python run_genetic.py` | Debug/treino/showcase |
 | [**Q-Learning**](docs/agentes/agente-qlearning.md) | `python run_qlearning.py` | Assiste agente treinado |
 
@@ -134,8 +134,9 @@ Ao iniciar: tela de titulo "ODISSEIA ORBITAL" em neon -> pressione **ENTER** -> 
 | Comando | Descricao |
 |---|---|
 | `python run_heuristic.py` | Modo normal -- A* ao vivo, salva automaticamente ao vencer |
-| `python run_heuristic.py --trained` | Carrega waypoints do run mais recente (sem A*) |
-| `python run_heuristic.py --trained 001` | Carrega waypoints de um run especifico |
+| `python run_heuristic.py --show` | Carrega waypoints do run mais recente (sem A*) |
+| `python run_heuristic.py --trained` | Sinonimo de `--show` |
+| `python run_heuristic.py --show 001` | Carrega waypoints de um run especifico |
 | `python run_heuristic.py --list` | Lista runs salvos em training_data/ |
 
 #### Q-Learning -- Subcomandos
@@ -146,10 +147,24 @@ Ao iniciar: tela de titulo "ODISSEIA ORBITAL" em neon -> pressione **ENTER** -> 
 | `python run_qlearning.py --train` | Treino completo -- 80.000 episodios headless |
 | `python run_qlearning.py --train --eps 40000` | Treino com N episodios |
 | `python run_qlearning.py --show` | Assiste o agente treinado (1 episodio) |
+| `python run_qlearning.py --watch` | Sinonimo de `--show` |
 | `python run_qlearning.py --show --episodios 5` | Assiste N episodios |
 | `python run_qlearning.py --list` | Lista checkpoints salvos |
 
 > O treino (`--train`) pode levar horas. A tabela Q treinada ja esta incluida em `game-enviroment/agents/q_learning/checkpoints/`.
+
+#### Genetico (Neuroevolucao) -- Subcomandos
+
+| Comando | Descricao |
+|---|---|
+| `python run_genetic.py` | Modo debug -- ve a frota evoluindo ao vivo |
+| `python run_genetic.py --train` | Treino headless -- 500 geracoes |
+| `python run_genetic.py --train --eps 100` | Treino com N geracoes |
+| `python run_genetic.py --train --gens 100` | Sinonimo de `--eps` |
+| `python run_genetic.py --train --pop 100` | Treino com N naves por geracao |
+| `python run_genetic.py --show` | Showcase do melhor cerebro (best.pkl) |
+| `python run_genetic.py --show 20` | Showcase de uma geracao especifica |
+| `python run_genetic.py --list` | Lista checkpoints salvos |
 
 #### Corrida -- Todos os Agentes Simultaneos
 

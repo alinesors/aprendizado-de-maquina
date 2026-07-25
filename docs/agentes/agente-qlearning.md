@@ -29,6 +29,7 @@ flowchart LR
 | `python run_qlearning.py --train` | Treino completo — 80.000 episodios headless |
 | `python run_qlearning.py --train --eps N` | Treino com N episodios |
 | `python run_qlearning.py --show` | Assiste o agente treinado (1 episodio) |
+| `python run_qlearning.py --watch` | Sinonimo de `--show` |
 | `python run_qlearning.py --show --episodios 5` | Assiste N episodios |
 | `python run_qlearning.py --list` | Lista checkpoints salvos |
 

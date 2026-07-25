@@ -84,7 +84,7 @@ class TreinadorGenetico:
                              top.checkpoints_coletados, top.status == "docked",
                              top.steps_alive, float(top.fuel))
 
-            if showcase and eh_checkpoint:
+            if eh_checkpoint:
                 self._rodar_showcase(env, gen, max_steps)
 
             pct_renovacao = 0.0
